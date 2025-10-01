@@ -34,6 +34,21 @@ export function TaskForm({ isOpen, onClose, onSubmit, initialData = null }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Validate required fields
+    if (!formData.client_name.trim()) {
+      alert("Client name is required");
+      return;
+    }
+    if (!formData.work_title.trim()) {
+      alert("Work title is required");
+      return;
+    }
+    if (!formData.due_date) {
+      alert("Due date is required");
+      return;
+    }
+
     onSubmit(formData);
     setFormData({
       client_name: "",
