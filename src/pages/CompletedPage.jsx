@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { TaskCard } from "../components/TaskCard";
+import { CompletedMetricsSummary } from "../components/CompletedMetricsSummary";
 import { supabase } from "../lib/supabase";
 import { Search, CheckCircle2, Clock, Trophy, Calendar } from "lucide-react";
+import { AnimatedPage } from "../components/AnimatedPage";
+import { smoothTransition } from "../lib/animations";
 
 export function CompletedPage() {
   const [tasks, setTasks] = useState([]);
@@ -84,186 +88,232 @@ export function CompletedPage() {
     }
   };
 
+  const handleDeleteTask = async (taskId) => {
+    try {
+      const { error } = await supabase.from("tasks").delete().eq("id", taskId);
+
+      if (error) {
+        console.error("Error deleting task:", error);
+        return;
+      }
+
+      // Refresh tasks
+      fetchCompletedTasks();
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex items-center space-x-3 text-muted-foreground">
-          <Clock className="h-5 w-5 animate-spin" />
-          <span className="text-sm font-medium">Loading...</span>
+      <AnimatedPage>
+        <div className="flex items-center justify-center h-64">
+          <motion.div
+            className="flex items-center space-x-3 text-muted-foreground"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={smoothTransition}
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <Clock className="h-5 w-5" />
+            </motion.div>
+            <span className="text-sm font-medium">Loading...</span>
+          </motion.div>
         </div>
-      </div>
+      </AnimatedPage>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="space-y-6">
-        <div className="flex items-center space-x-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Trophy className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Completed Works
-            </h1>
-            <p className="text-muted-foreground">
-              Review your completed tasks and achievements
-            </p>
-          </div>
-        </div>
-
-        {/* Search */}
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search completed tasks..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 border-input bg-background"
-          />
-        </div>
-      </div>
-
-      {/* Summary Stats */}
-      {tasks.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border-border bg-card hover:shadow-sm transition-shadow">
-            <CardContent className="py-6">
-              <div className="flex items-center space-x-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Trophy className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-card-foreground">
-                    Total Completed
-                  </p>
-                  <p className="text-2xl font-bold text-card-foreground">
-                    {tasks.length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border bg-card hover:shadow-sm transition-shadow">
-            <CardContent className="py-6">
-              <div className="flex items-center space-x-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Calendar className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-card-foreground">
-                    This Week
-                  </p>
-                  <p className="text-2xl font-bold text-primary">
-                    {
-                      tasks.filter((task) => {
-                        const completedDate = new Date(task.completed_at);
-                        const weekAgo = new Date();
-                        weekAgo.setDate(weekAgo.getDate() - 7);
-                        return completedDate >= weekAgo;
-                      }).length
-                    }
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border bg-card hover:shadow-sm transition-shadow">
-            <CardContent className="py-6">
-              <div className="flex items-center space-x-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  <Search className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-card-foreground">
-                    Showing
-                  </p>
-                  <p className="text-2xl font-bold text-card-foreground">
-                    {filteredTasks.length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Tasks */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-              Completed Tasks
-            </h2>
-            <p className="text-muted-foreground">
-              Your finished work assignments
-            </p>
-          </div>
-          {tasks.length > 0 && (
-            <Badge
-              variant="secondary"
-              className="flex items-center space-x-2 px-3 py-1 bg-secondary text-secondary-foreground"
+    <AnimatedPage>
+      <motion.div
+        className="space-y-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        {/* Header */}
+        <motion.div
+          className="space-y-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
+          <motion.div
+            className="flex items-center space-x-3"
+            whileHover={{ x: 4 }}
+            transition={smoothTransition}
+          >
+            <motion.div
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              transition={smoothTransition}
             >
-              <CheckCircle2 className="h-3 w-3" />
-              <span className="text-sm font-medium">
-                {filteredTasks.length} of {tasks.length}
-              </span>
-            </Badge>
-          )}
-        </div>
+              <Trophy className="h-5 w-5 text-primary" />
+            </motion.div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                Completed Works
+              </h1>
+            </div>
+          </motion.div>
 
-        {filteredTasks.length === 0 ? (
-          <Card className="border-border bg-card">
-            <CardContent className="py-16 text-center">
-              <div className="space-y-4">
-                {searchTerm ? (
-                  <>
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                      <Search className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-semibold text-card-foreground">
-                        No matches found
-                      </h3>
-                      <p className="text-muted-foreground max-w-sm mx-auto">
-                        Try adjusting your search terms to find completed tasks.
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                      <Trophy className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-semibold text-card-foreground">
-                        No completed tasks
-                      </h3>
-                      <p className="text-muted-foreground max-w-sm mx-auto">
-                        Complete some tasks to see them here and track your
-                        achievements.
-                      </p>
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onStatusUpdate={handleStatusUpdate}
-              />
-            ))}
-          </div>
+          {/* Search */}
+          <motion.div
+            className="relative max-w-md"
+            whileHover={{ scale: 1.02 }}
+            transition={smoothTransition}
+          >
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search completed tasks..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 border-input bg-background"
+            />
+          </motion.div>
+        </motion.div>
+
+        {/* Summary Stats */}
+        {tasks.length > 0 && (
+          <motion.div
+            className="space-y-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+          >
+            <h2 className="text-lg font-medium text-card-foreground">
+              Overview
+            </h2>
+            <CompletedMetricsSummary
+              tasks={tasks}
+              filteredTasks={filteredTasks}
+            />
+          </motion.div>
         )}
-      </div>
-    </div>
+
+        {/* Tasks */}
+        <motion.div
+          className="space-y-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+        >
+          <motion.div
+            className="flex items-center justify-between"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.4 }}
+          >
+            <div className="space-y-1">
+              <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                Completed Tasks
+              </h2>
+            </div>
+            {tasks.length > 0 && (
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                transition={smoothTransition}
+              >
+                <Badge
+                  variant="secondary"
+                  className="flex items-center space-x-2 px-3 py-1 bg-secondary text-secondary-foreground"
+                >
+                  <CheckCircle2 className="h-3 w-3" />
+                  <span className="text-sm font-medium">
+                    {filteredTasks.length} of {tasks.length}
+                  </span>
+                </Badge>
+              </motion.div>
+            )}
+          </motion.div>
+
+          {filteredTasks.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={smoothTransition}
+              whileHover={{ y: -4 }}
+            >
+              <Card className="border-border bg-card">
+                <CardContent className="py-16 text-center">
+                  <div className="space-y-4">
+                    {searchTerm ? (
+                      <>
+                        <motion.div
+                          className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted"
+                          whileHover={{ scale: 1.1, rotate: 10 }}
+                          transition={smoothTransition}
+                        >
+                          <Search className="h-8 w-8 text-muted-foreground" />
+                        </motion.div>
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-semibold text-card-foreground">
+                            No matches found
+                          </h3>
+                          <p className="text-muted-foreground max-w-sm mx-auto">
+                            Try adjusting your search terms to find completed
+                            tasks.
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <motion.div
+                          className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted"
+                          whileHover={{ scale: 1.1, rotate: 10 }}
+                          transition={smoothTransition}
+                        >
+                          <Trophy className="h-8 w-8 text-muted-foreground" />
+                        </motion.div>
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-semibold text-card-foreground">
+                            No completed tasks
+                          </h3>
+                          <p className="text-muted-foreground max-w-sm mx-auto">
+                            Complete some tasks to see them here and track your
+                            achievements.
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ) : (
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, staggerChildren: 0.1 }}
+            >
+              {filteredTasks.map((task, index) => (
+                <motion.div
+                  key={task.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: index * 0.1,
+                    ease: [0.4, 0, 0.2, 1],
+                  }}
+                  whileHover={{ y: -4 }}
+                >
+                  <TaskCard
+                    task={task}
+                    onStatusUpdate={handleStatusUpdate}
+                    onDelete={handleDeleteTask}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </motion.div>
+      </motion.div>
+    </AnimatedPage>
   );
 }

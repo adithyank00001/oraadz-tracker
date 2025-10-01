@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,11 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Button } from "./ui/button";
+import {
+  staggerContainer,
+  staggerItem,
+  smoothTransition,
+} from "../lib/animations";
 
 export function TaskForm({ isOpen, onClose, onSubmit, initialData = null }) {
   const [formData, setFormData] = useState({
@@ -81,9 +87,22 @@ export function TaskForm({ isOpen, onClose, onSubmit, initialData = null }) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+        <motion.form
+          onSubmit={handleSubmit}
+          className="space-y-6"
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+        >
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            variants={staggerItem}
+          >
+            <motion.div
+              className="space-y-2"
+              whileHover={{ y: -2 }}
+              transition={smoothTransition}
+            >
               <Label
                 htmlFor="client_name"
                 className="text-sm font-medium text-foreground"
@@ -99,9 +118,13 @@ export function TaskForm({ isOpen, onClose, onSubmit, initialData = null }) {
                 required
                 className="border-input bg-background text-foreground"
               />
-            </div>
+            </motion.div>
 
-            <div className="space-y-2">
+            <motion.div
+              className="space-y-2"
+              whileHover={{ y: -2 }}
+              transition={smoothTransition}
+            >
               <Label
                 htmlFor="work_title"
                 className="text-sm font-medium text-foreground"
@@ -117,11 +140,18 @@ export function TaskForm({ isOpen, onClose, onSubmit, initialData = null }) {
                 required
                 className="border-input bg-background text-foreground"
               />
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            variants={staggerItem}
+          >
+            <motion.div
+              className="space-y-2"
+              whileHover={{ y: -2 }}
+              transition={smoothTransition}
+            >
               <Label
                 htmlFor="due_date"
                 className="text-sm font-medium text-foreground"
@@ -132,9 +162,13 @@ export function TaskForm({ isOpen, onClose, onSubmit, initialData = null }) {
                 value={formData.due_date}
                 onChange={(val) => handleChange("due_date", val)}
               />
-            </div>
+            </motion.div>
 
-            <div className="space-y-2">
+            <motion.div
+              className="space-y-2"
+              whileHover={{ y: -2 }}
+              transition={smoothTransition}
+            >
               <Label
                 htmlFor="assignee"
                 className="text-sm font-medium text-foreground"
@@ -149,11 +183,18 @@ export function TaskForm({ isOpen, onClose, onSubmit, initialData = null }) {
                 onChange={(e) => handleChange("assignee", e.target.value)}
                 className="border-input bg-background text-foreground"
               />
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            variants={staggerItem}
+          >
+            <motion.div
+              className="space-y-2"
+              whileHover={{ y: -2 }}
+              transition={smoothTransition}
+            >
               <Label
                 htmlFor="priority"
                 className="text-sm font-medium text-foreground"
@@ -174,9 +215,13 @@ export function TaskForm({ isOpen, onClose, onSubmit, initialData = null }) {
                   <SelectItem value="URGENT">URGENT</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </motion.div>
 
-            <div className="space-y-2">
+            <motion.div
+              className="space-y-2"
+              whileHover={{ y: -2 }}
+              transition={smoothTransition}
+            >
               <Label
                 htmlFor="category"
                 className="text-sm font-medium text-foreground"
@@ -195,65 +240,81 @@ export function TaskForm({ isOpen, onClose, onSubmit, initialData = null }) {
                   <SelectItem value="General Work">General Work</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
-          <div className="space-y-2">
+          <motion.div className="space-y-2" variants={staggerItem}>
             <Label
               htmlFor="description"
               className="text-sm font-medium text-foreground"
             >
               Description
             </Label>
-            <Textarea
-              id="description"
-              placeholder="Enter work description"
-              value={formData.description}
-              onChange={(e) => handleChange("description", e.target.value)}
-              rows={3}
-              className="border-input bg-background resize-none"
-            />
-          </div>
+            <motion.div whileHover={{ y: -2 }} transition={smoothTransition}>
+              <Textarea
+                id="description"
+                placeholder="Enter work description"
+                value={formData.description}
+                onChange={(e) => handleChange("description", e.target.value)}
+                rows={3}
+                className="border-input bg-background resize-none"
+              />
+            </motion.div>
+          </motion.div>
 
           {initialData && (
-            <div className="space-y-2">
+            <motion.div className="space-y-2" variants={staggerItem}>
               <Label
                 htmlFor="status"
                 className="text-sm font-medium text-foreground"
               >
                 Status
               </Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => handleChange("status", value)}
-              >
-                <SelectTrigger className="border-input bg-background text-foreground">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border">
-                  <SelectItem value="New">New</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <motion.div whileHover={{ y: -2 }} transition={smoothTransition}>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => handleChange("status", value)}
+                >
+                  <SelectTrigger className="border-input bg-background text-foreground">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border">
+                    <SelectItem value="New">New</SelectItem>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </motion.div>
+            </motion.div>
           )}
-        </form>
+        </motion.form>
 
         <DialogFooter className="flex gap-3 pt-4">
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={smoothTransition}
           >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            <Button
+              variant="secondary"
+              onClick={onClose}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            >
+              Cancel
+            </Button>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={smoothTransition}
           >
-            {initialData ? "Update Task" : "Create Task"}
-          </Button>
+            <Button
+              onClick={handleSubmit}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              {initialData ? "Update Task" : "Create Task"}
+            </Button>
+          </motion.div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   Card,
   CardContent,
@@ -9,14 +10,27 @@ import { Badge } from "../components/ui/badge";
 import { TaskCard } from "../components/TaskCard";
 import { supabase } from "../lib/supabase";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import {
   Clock,
   Calendar,
   AlertTriangle,
   CheckCircle2,
-  TrendingUp,
-  Users,
   Activity,
 } from "lucide-react";
+import { MetricsSummary } from "../components/MetricsSummary";
+import { AnimatedPage } from "../components/AnimatedPage";
+import {
+  staggerContainer,
+  staggerItem,
+  fadeInUp,
+  smoothTransition,
+} from "../lib/animations";
 
 export function DashboardPage() {
   const [tasks, setTasks] = useState([]);
@@ -26,6 +40,8 @@ export function DashboardPage() {
     dueToday: 0,
     overdue: 0,
   });
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [typeFilter, setTypeFilter] = useState("All");
 
   useEffect(() => {
     fetchTasks();
@@ -93,143 +109,218 @@ export function DashboardPage() {
     }
   };
 
+  const handleDeleteTask = async (taskId) => {
+    try {
+      const { error } = await supabase.from("tasks").delete().eq("id", taskId);
+
+      if (error) {
+        console.error("Error deleting task:", error);
+        return;
+      }
+
+      // Refresh tasks
+      fetchTasks();
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const filteredTasks = tasks.filter((task) => {
+    const statusOk =
+      statusFilter === "All" ? true : task.status === statusFilter;
+    const typeOk =
+      typeFilter === "All"
+        ? true
+        : (typeFilter === "General" && task.category === "General Work") ||
+          (typeFilter === "Design" && task.category === "Design Work");
+    return statusOk && typeOk;
+  });
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex items-center space-x-3 text-muted-foreground">
-          <Clock className="h-5 w-5 animate-spin" />
-          <span className="text-sm font-medium">Loading...</span>
+      <AnimatedPage>
+        <div className="flex items-center justify-center h-64">
+          <motion.div
+            className="flex items-center space-x-3 text-muted-foreground"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={smoothTransition}
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <Clock className="h-5 w-5" />
+            </motion.div>
+            <span className="text-sm font-medium">Loading...</span>
+          </motion.div>
         </div>
-      </div>
+      </AnimatedPage>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="space-y-3">
-        <div className="flex items-center space-x-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Activity className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Dashboard
-            </h1>
-            <p className="text-muted-foreground">
-              Overview of your active work tasks and progress
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-border bg-card hover:shadow-sm transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium text-card-foreground">
-              Total Active Works
-            </CardTitle>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <TrendingUp className="h-4 w-4 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-card-foreground">
-              {metrics.totalActive}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Currently in progress
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card hover:shadow-sm transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium text-card-foreground">
-              Works Due Today
-            </CardTitle>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Calendar className="h-4 w-4 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">
-              {metrics.dueToday}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Due today</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card hover:shadow-sm transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium text-card-foreground">
-              Overdue Works
-            </CardTitle>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive/10">
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {metrics.overdue}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Need attention</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tasks */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-              Active Tasks
-            </h2>
-            <p className="text-muted-foreground">
-              Manage your ongoing work assignments
-            </p>
-          </div>
-          <Badge
-            variant="secondary"
-            className="flex items-center space-x-2 px-3 py-1 bg-secondary text-secondary-foreground"
+    <AnimatedPage>
+      <motion.div
+        className="space-y-8"
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+      >
+        {/* Header */}
+        <motion.div className="space-y-3" variants={staggerItem}>
+          <motion.div
+            className="flex items-center space-x-3"
+            whileHover={{ x: 4 }}
+            transition={smoothTransition}
           >
-            <CheckCircle2 className="h-3 w-3" />
-            <span className="text-sm font-medium">{tasks.length} tasks</span>
-          </Badge>
-        </div>
+            <motion.div
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              transition={smoothTransition}
+            >
+              <Activity className="h-5 w-5 text-primary" />
+            </motion.div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                Dashboard
+              </h1>
+            </div>
+          </motion.div>
+        </motion.div>
 
-        {tasks.length === 0 ? (
-          <Card className="border-border bg-card">
-            <CardContent className="py-16 text-center">
-              <div className="space-y-4">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                  <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-card-foreground">
-                    No active tasks
-                  </h3>
-                  <p className="text-muted-foreground max-w-sm mx-auto">
-                    You're all caught up! Add a new task to get started with
-                    your work tracking.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onStatusUpdate={handleStatusUpdate}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+        {/* Metrics - single component */}
+        <motion.div className="space-y-3" variants={staggerItem}>
+          <h2 className="text-lg font-medium text-card-foreground">Overview</h2>
+          <MetricsSummary metrics={metrics} />
+        </motion.div>
+
+        {/* Tasks */}
+        <motion.div className="space-y-6" variants={staggerItem}>
+          <motion.div
+            className="flex items-center justify-between"
+            variants={fadeInUp}
+          >
+            <div className="space-y-1">
+              <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                Active Tasks
+              </h2>
+            </div>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              transition={smoothTransition}
+            >
+              <Badge
+                variant="secondary"
+                className="flex items-center space-x-2 px-3 py-1 bg-secondary text-secondary-foreground"
+              >
+                <CheckCircle2 className="h-3 w-3" />
+                <span className="text-sm font-medium">
+                  {filteredTasks.length} tasks
+                </span>
+              </Badge>
+            </motion.div>
+          </motion.div>
+
+          {/* Filters */}
+          <motion.div
+            className="flex flex-wrap items-center gap-2"
+            variants={fadeInUp}
+          >
+            <motion.div
+              className="space-y-1"
+              whileHover={{ y: -2 }}
+              transition={smoothTransition}
+            >
+              <span className="text-sm font-medium text-foreground">
+                Status
+              </span>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="border-input bg-background text-foreground">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  <SelectItem value="All">All</SelectItem>
+                  <SelectItem value="New">New</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                </SelectContent>
+              </Select>
+            </motion.div>
+            <motion.div
+              className="space-y-1"
+              whileHover={{ y: -2 }}
+              transition={smoothTransition}
+            >
+              <span className="text-sm font-medium text-foreground">
+                Work Type
+              </span>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="border-input bg-background text-foreground">
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  <SelectItem value="All">All</SelectItem>
+                  <SelectItem value="General">General</SelectItem>
+                  <SelectItem value="Design">Design</SelectItem>
+                </SelectContent>
+              </Select>
+            </motion.div>
+          </motion.div>
+
+          {filteredTasks.length === 0 ? (
+            <motion.div
+              variants={fadeInUp}
+              whileHover={{ y: -4 }}
+              transition={smoothTransition}
+            >
+              <Card className="border-border bg-card">
+                <CardContent className="py-16 text-center">
+                  <div className="space-y-4">
+                    <motion.div
+                      className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted"
+                      whileHover={{ scale: 1.1, rotate: 10 }}
+                      transition={smoothTransition}
+                    >
+                      <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
+                    </motion.div>
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold text-card-foreground">
+                        No matching tasks
+                      </h3>
+                      <p className="text-muted-foreground max-w-sm mx-auto">
+                        Try adjusting the filters or add a new task to get
+                        started.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ) : (
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              variants={staggerContainer}
+              initial="initial"
+              animate="animate"
+            >
+              {filteredTasks.map((task, index) => (
+                <motion.div
+                  key={task.id}
+                  variants={staggerItem}
+                  whileHover={{ y: -4 }}
+                  transition={smoothTransition}
+                >
+                  <TaskCard
+                    task={task}
+                    onStatusUpdate={handleStatusUpdate}
+                    onDelete={handleDeleteTask}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </motion.div>
+      </motion.div>
+    </AnimatedPage>
   );
 }
